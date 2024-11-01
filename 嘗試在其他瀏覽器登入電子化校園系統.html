@@ -48,19 +48,19 @@
             margin-bottom: 10px;
         }
         .radio-container input[type="radio"] {
-            display: none; /* 隱藏原始的單選按鈕 */
+            display: none; 
         }
         .radio-container label {
             cursor: pointer;
             padding: 10px 15px;
-            border: 2px solid #4CAF50; /* 邊框顏色 */
-            border-radius: 5px; /* 圓角 */
-            margin-right: 10px; /* 右邊距 */
-            transition: background-color 0.3s, color 0.3s; /* 動畫效果 */
+            border: 2px solid #4CAF50; 
+            border-radius: 5px; 
+            margin-right: 10px; 
+            transition: background-color 0.3s, color 0.3s; 
         }
         .radio-container input[type="radio"]:checked + label {
-            background-color: #4CAF50; /* 選中時的背景顏色 */
-            color: white; /* 選中時的字體顏色 */
+            background-color: #4CAF50; 
+            color: white; 
         }
     </style>
     <script>
@@ -70,7 +70,6 @@ function chk_login(event) {
     var empNo = document.forms["LOGIN"].EMPNO.value;
     var password = document.forms["LOGIN"].loginPassword.value;
 
-    // 確保帳號和密碼都不為空
     if (empNo === "" || password === "") {
         alert("請輸入帳號、密碼！");
         return;
@@ -81,20 +80,15 @@ function chk_login(event) {
     var style = "width=" + (screen.availWidth - 10) + ",height=" + (screen.availHeight - 20) + ",left=0,top=0,scrollbars=1,status=1,resizable=1,titlebar=no";
     var win;
 
-    // 模擬表單提交到另一個網址
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "https://www2.ecampus.scu.edu.tw/portal/index_01c1.aspx?control_type=LOGIN_MODE", true);
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     
-    // 發送請求，不處理回應
     xhr.send("EMPNO=" + encodeURIComponent(empNo) + "&loginPassword=" + encodeURIComponent(password) + "&USER_STATUS=" + USER_STATUS);
 
-    // 進行原本的登入動作
     if (USER_STATUS === "2") {
-        // 學生的登入 URL
         win = window.open("//www2.ecampus.scu.edu.tw/portal/stu/stuindex.aspx", frameName, style);
     } else {
-        // 教職員的登入 URL
         win = window.open("//www2.ecampus.scu.edu.tw/portal/portal_emp.aspx", frameName, style);
     }
 
@@ -102,7 +96,6 @@ function chk_login(event) {
 }
 
 
-        // 使用 IE 兼容的事件綁定
         window.onload = function() {
             var loginForm = document.forms["LOGIN"];
             loginForm.onsubmit = chk_login;
