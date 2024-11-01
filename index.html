@@ -11,26 +11,26 @@
             align-items: center;
             margin: 0;
             height: 100vh;
-            background-color: #252423; /* 背景顏色 */
+            background-color: #252423; 
         }
         .embed-container {
             width: 550px;
-            border-radius: 25px; /* 邊框圓角 */
-            border: 12px solid #252423; /* 添加邊框 */
-            height: 300px; /* 設定高寬比 */
+            border-radius: 25px; 
+            border: 12px solid #252423; 
+            height: 300px; 
             margin-bottom: 20px;
-            overflow: hidden; /* 防止內容超出邊界 */
-            position: relative; /* 使內部元素的絕對定位相對於這個容器 */
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* 添加陰影 */
+            overflow: hidden; 
+            position: relative; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); 
         }
         .iframe {
-            position: absolute; /* 使 iframe 位置相對於嵌入容器 */
-            top: -790px; /* 根據需要調整的數值，以便移動 iframe 內容 */
-            left: -150px; /* 根據需要調整的數值，以便移動 iframe 內容 */
-            width: 900px; /* 擴大 iframe 以便更好地控制內容顯示 */
-            height: 600px; /* 擴大 iframe 以便更好地控制內容顯示 */
-            transform: scale(2.1); /* 縮放 iframe，以顯示中間部分 */
-            transform-origin: top left; /* 設定縮放基準點 */
+            position: absolute; 
+            top: -790px; 
+            left: -150px; 
+            width: 900px; 
+            height: 600px; 
+            transform: scale(2.1);
+            transform-origin: top left; 
         }
         .button-container {
             margin: 10px 0;
@@ -39,24 +39,24 @@
             padding: 10px 20px;
             margin: 0 10px;
             cursor: pointer;
-            border: none; /* 去掉按鈕邊框 */
-            border-radius: 5px; /* 按鈕圓角 */
-            background-color: #a19154; /* 按鈕背景顏色 */
-            color: white; /* 按鈕字體顏色 */
-            font-size: 16px; /* 字體大小 */
-            transition: background-color 0.3s, transform 0.2s; /* 過渡效果 */
+            border: none; 
+            border-radius: 5px; 
+            background-color: #a19154; 
+            color: white; 
+            font-size: 16px; 
+            transition: background-color 0.3s, transform 0.2s; 
         }
         .button:hover {
-            background-color: #ceb243; /* 滑鼠懸停時背景顏色 */
-            transform: scale(1.05); /* 滑鼠懸停時放大效果 */
+            background-color: #ceb243; 
+            transform: scale(1.05);
         }
         .button:active {
-            transform: scale(0.95); /* 按下時縮小效果 */
+            transform: scale(0.95); 
         }
 
         .rounded-image {
-    border-radius: 15px; /* 圓角半徑 */
-    margin-top: 20px; /* 與上方元素的距離 */
+    border-radius: 15px; 
+    margin-top: 20px; 
   }
 
     </style>
@@ -64,7 +64,6 @@
 <body>
 
     <div class="embed-container" id="top-embed">
-        <!-- 上方嵌入欄 -->
         <iframe class="iframe" src="https://www2.ecampus.scu.edu.tw/portal/Login.aspx"></iframe>
         
         
@@ -84,7 +83,6 @@
         }
 
         function openWindow(url) {
-            // 打開新窗口，並設置寬度和高度
             window.open(url, '_blank', 'width=800,height=600');
         }
         
