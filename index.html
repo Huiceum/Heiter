@@ -1,126 +1,94 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>東吳大學電子化校園系統－登入</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>嵌入工具</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            height: 100vh;
             margin: 0;
-            background-color: #f5f5f5;
+            height: 100vh;
+            background-color: #252423; /* 背景顏色 */
         }
-        #login-container {
-            background-color: #fff;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            width: 300px;
+        .embed-container {
+            width: 550px;
+            border-radius: 25px; /* 邊框圓角 */
+            border: 12px solid #252423; /* 添加邊框 */
+            height: 300px; /* 設定高寬比 */
+            margin-bottom: 20px;
+            overflow: hidden; /* 防止內容超出邊界 */
+            position: relative; /* 使內部元素的絕對定位相對於這個容器 */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* 添加陰影 */
         }
-        #login-container h2 {
-            margin-top: 0;
-            text-align: center;
+        .iframe {
+            position: absolute; /* 使 iframe 位置相對於嵌入容器 */
+            top: -790px; /* 根據需要調整的數值，以便移動 iframe 內容 */
+            left: -150px; /* 根據需要調整的數值，以便移動 iframe 內容 */
+            width: 900px; /* 擴大 iframe 以便更好地控制內容顯示 */
+            height: 600px; /* 擴大 iframe 以便更好地控制內容顯示 */
+            transform: scale(2.1); /* 縮放 iframe，以顯示中間部分 */
+            transform-origin: top left; /* 設定縮放基準點 */
         }
-        #login-container input[type="text"],
-        #login-container input[type="password"],
-        #login-container input[type="submit"] {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            box-sizing: border-box;
+        .button-container {
+            margin: 10px 0;
         }
-        #login-container input[type="submit"] {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
+        .button {
+            padding: 10px 20px;
+            margin: 0 10px;
             cursor: pointer;
+            border: none; /* 去掉按鈕邊框 */
+            border-radius: 5px; /* 按鈕圓角 */
+            background-color: #a19154; /* 按鈕背景顏色 */
+            color: white; /* 按鈕字體顏色 */
+            font-size: 16px; /* 字體大小 */
+            transition: background-color 0.3s, transform 0.2s; /* 過渡效果 */
         }
-        #login-container input[type="submit"]:hover {
-            background-color: #45a049;
+        .button:hover {
+            background-color: #ceb243; /* 滑鼠懸停時背景顏色 */
+            transform: scale(1.05); /* 滑鼠懸停時放大效果 */
         }
-        /* 自定義單選按鈕樣式 */
-        .radio-container {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
+        .button:active {
+            transform: scale(0.95); /* 按下時縮小效果 */
         }
-        .radio-container input[type="radio"] {
-            display: none; 
-        }
-        .radio-container label {
-            cursor: pointer;
-            padding: 10px 15px;
-            border: 2px solid #4CAF50; 
-            border-radius: 5px; 
-            margin-right: 10px; 
-            transition: background-color 0.3s, color 0.3s; 
-        }
-        .radio-container input[type="radio"]:checked + label {
-            background-color: #4CAF50; 
-            color: white; 
-        }
+
+        .rounded-image {
+    border-radius: 15px; /* 圓角半徑 */
+    margin-top: 20px; /* 與上方元素的距離 */
+  }
+
     </style>
-    <script>
-function chk_login(event) {
-    event.preventDefault();
-
-    var empNo = document.forms["LOGIN"].EMPNO.value;
-    var password = document.forms["LOGIN"].loginPassword.value;
-
-    if (empNo === "" || password === "") {
-        alert("請輸入帳號、密碼！");
-        return;
-    }
-
-    var USER_STATUS = document.forms["LOGIN"].USER_STATUS[1].checked ? "2" : "1";
-    var frameName = "031552999";
-    var style = "width=" + (screen.availWidth - 10) + ",height=" + (screen.availHeight - 20) + ",left=0,top=0,scrollbars=1,status=1,resizable=1,titlebar=no";
-    var win;
-
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "https://www2.ecampus.scu.edu.tw/portal/index_01c1.aspx?control_type=LOGIN_MODE", true);
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    
-    xhr.send("EMPNO=" + encodeURIComponent(empNo) + "&loginPassword=" + encodeURIComponent(password) + "&USER_STATUS=" + USER_STATUS);
-
-    if (USER_STATUS === "2") {
-        win = window.open("//www2.ecampus.scu.edu.tw/portal/stu/stuindex.aspx", frameName, style);
-    } else {
-        win = window.open("//www2.ecampus.scu.edu.tw/portal/portal_emp.aspx", frameName, style);
-    }
-
-    loginXhr.send("EMPNO=" + encodeURIComponent(empNo) + "&loginPassword=" + encodeURIComponent(password) + "&USER_STATUS=" + USER_STATUS);
-}
-
-
-        window.onload = function() {
-            var loginForm = document.forms["LOGIN"];
-            loginForm.onsubmit = chk_login;
-        };
-    </script>
 </head>
-
 <body>
 
-    <div id="login-container">
-        <h2>登入系統</h2>
-        <form name="LOGIN" method="post">
-            <div class="radio-container">
-                <input name="USER_STATUS" type="radio" value="1" id="teacher" checked />
-                <label for="teacher">教職員</label>
-                <input name="USER_STATUS" type="radio" value="2" id="student" />
-                <label for="student">學生</label>
-            </div>
-            <input type="text" id="EMPNO" name="EMPNO" placeholder="帳號" />
-            <input type="password" id="loginPassword" name="loginPassword" placeholder="密碼" />
-            <input type="submit" value="登入" />
-            
-        </form>
+    <div class="embed-container" id="top-embed">
+        <!-- 上方嵌入欄 -->
+        <iframe class="iframe" src="https://www2.ecampus.scu.edu.tw/portal/Login.aspx"></iframe>
+        
+        
     </div>
-    <img src="https://hbl917070.com/img/murl/qc2GU4p.jpg" alt="替代文字" width="AUTO" height="300">
+
+    <div class="button-container">
+        <button class="button" onclick="openWindow('https://www2.ecampus.scu.edu.tw/portal/stu/stuindex.aspx')">開啟系統</button>
+    </div>
+
+    <img src="https://hbl917070.com/img/murl/qc2GU4p.jpg" alt="替代文字" width="550" height="300" class="rounded-image">
+
+    
+
+    <script>
+        function changeUrl(url) {
+            document.getElementById('bottom-embed').querySelector('iframe').src = url;
+        }
+
+        function openWindow(url) {
+            // 打開新窗口，並設置寬度和高度
+            window.open(url, '_blank', 'width=800,height=600');
+        }
+        
+    </script>
 
 </body>
 </html>
