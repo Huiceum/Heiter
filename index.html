@@ -3,90 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>嵌入工具</title>
+    <title>課表轉換工具</title>
     <style>
         body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            height: 100vh;
-            background-color: #252423; 
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
         }
-        .embed-container {
-            width: 550px;
-            border-radius: 25px; 
-            border: 12px solid #252423; 
-            height: 300px; 
+
+        #inputArea {
             margin-bottom: 20px;
-            overflow: hidden; 
-            position: relative; 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); 
         }
-        .iframe {
-            position: absolute; 
-            top: -790px; 
-            left: -150px; 
-            width: 900px; 
-            height: 600px; 
-            transform: scale(2.1);
-            transform-origin: top left; 
+
+        #inputText {
+            width: 50%;
+            height: 100px;
+            padding: 10px;
+            font-size: 14px;
         }
-        .button-container {
-            margin: 10px 0;
-        }
-        .button {
+
+        #convertButton {
             padding: 10px 20px;
-            margin: 0 10px;
+            background-color: #8B0000;
+            color: white;
+            border: none;
             cursor: pointer;
-            border: none; 
-            border-radius: 5px; 
-            background-color: #a19154; 
-            color: white; 
-            font-size: 16px; 
-            transition: background-color 0.3s, transform 0.2s; 
-        }
-        .button:hover {
-            background-color: #ceb243; 
-            transform: scale(1.05);
-        }
-        .button:active {
-            transform: scale(0.95); 
+            font-size: 16px;
+            margin-top: 10px;
         }
 
-        .rounded-image {
-    border-radius: 15px; 
-    margin-top: 20px; 
-  }
+        #timetable {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            max-width: 800px;
+        }
 
+        .header {
+            background: #8B0000;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-weight: bold;
+        }
+
+        .cell {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+            font-weight: bold;
+            min-width: 80px;
+            min-height: 50px;
+            max-width: 80px;
+            max-height: 50px;
+            font-size: 12px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .current {
+            transform: scale(1.3); /* 放大當前上課的格子 */
+            z-index: 1; /* 確保格子在其他格子上方 */
+            border: 3px solid #ffd82c;
+        }
     </style>
 </head>
 <body>
-
-    <div class="embed-container" id="top-embed">
-        <iframe class="iframe" src="https://www2.ecampus.scu.edu.tw/portal/Login.aspx"></iframe>
-        
-        
+    <h1>課表轉換工具</h1>
+    <div id="inputArea">
+        <textarea id="inputText" placeholder="請在此貼上課程資料轉碼"></textarea>
+        <button id="convertButton">轉換為課表</button>
     </div>
-
-    <div class="button-container">
-        <button class="button" onclick="openWindow('https://www2.ecampus.scu.edu.tw/portal/stu/stuindex.aspx')">開啟系統</button>
-    </div>
-
-    <img src="https://hbl917070.com/img/murl/qc2GU4p.jpg" alt="替代文字" width="550" height="300" class="rounded-image">
-
-    
+    <div id="timetable"></div>
 
     <script>
-        function changeUrl(url) {
-            document.getElementById('bottom-embed').querySelector('iframe').src = url;
+        const inputTextArea = document.getElementById("inputText");
+        const timetable = document.getElementById("timetable");
+
+        window.onload = () => {
+            const savedData = localStorage.getItem("courseData");
+            if (savedData) {
+                inputTextArea.value = savedData;
+                updateTimetable(savedData); 
+            }
+        };
+
+        document.getElementById("convertButton").addEventListener("click", function() {
+            const inputText = inputTextArea.value;
+            localStorage.setItem("courseData", inputText); 
+            updateTimetable(inputText);
+        });
+
+        function updateTimetable(inputText) {
+            timetable.innerHTML = ''; 
+
+            const days = ["一", "二", "三", "四", "五", "六", "日"];
+            const periods = [
+                {num: "1", time: "08:10 ~ 09:00"},
+                {num: "2", time: "09:10 ~ 10:00"},
+                {num: "3", time: "10:10 ~ 11:00"},
+                {num: "4", time: "11:10 ~ 12:00"},
+                {num: "E", time: "12:10 ~ 13:00"},
+                {num: "5", time: "13:10 ~ 14:00"},
+                {num: "6", time: "14:10 ~ 15:00"},
+                {num: "7", time: "15:10 ~ 16:00"},
+                {num: "8", time: "16:10 ~ 17:00"},
+                {num: "9", time: "17:10 ~ 18:20"},
+                {num: "A", time: "18:25 ~ 19:15"},
+                {num: "B", time: "19:20 ~ 20:10"},
+                {num: "C", time: "20:20 ~ 21:10"},
+                {num: "D", time: "21:15 ~ 22:05"}
+            ];
+
+            const headers = ["節次/時間", ...days];
+            headers.forEach(headerText => {
+                const header = document.createElement("div");
+                header.className = "header";
+                header.innerText = headerText;
+                timetable.appendChild(header);
+            });
+
+            const now = new Date();
+            const currentDayIndex = now.getDay() === 0 ? 6 : now.getDay() - 1; 
+            const currentTime = now.toTimeString().slice(0, 5); 
+
+            periods.forEach(period => {
+                const periodHeader = document.createElement("div");
+                periodHeader.className = "cell";
+                periodHeader.innerText = `${period.num}\n${period.time}`; 
+                timetable.appendChild(periodHeader);
+
+                for (const day of days) {
+                    const cellKey = day + period.num; 
+                    const cell = document.createElement("div");
+                    cell.className = "cell";
+
+                    const courseData = {};
+                    const lines = inputText.split("#").filter(line => line.trim() !== '');
+                    lines.forEach(line => {
+                        const parts = line.trim().split(':');
+                        if (parts.length > 1) {
+                            const dayAndPeriod = parts[0].trim(); 
+                            const content = parts.slice(1).join(':').trim(); 
+                            const day = dayAndPeriod.charAt(0); 
+                            const periodNum = dayAndPeriod.substring(1); 
+                            
+                            let adjustedPeriod;
+                            switch(periodNum) {
+                                case '5': adjustedPeriod = 'E'; break;
+                                case '6': adjustedPeriod = '5'; break;
+                                case '7': adjustedPeriod = '6'; break;
+                                case '8': adjustedPeriod = '7'; break;
+                                case '9': adjustedPeriod = '8'; break;
+                                case '10': adjustedPeriod = 'A'; break;
+                                case '11': adjustedPeriod = 'B'; break; 
+                                case '12': adjustedPeriod = 'C'; break; 
+                                case '13': adjustedPeriod = 'D'; break;
+                                default: adjustedPeriod = periodNum; break; 
+                            }
+
+                            const key = day + adjustedPeriod; 
+                            if (!courseData[key]) {
+                                courseData[key] = [];
+                            }
+                            courseData[key].push(content); 
+                        }
+                    });
+
+                    if (courseData[cellKey]) {
+                        cell.innerHTML = courseData[cellKey].join('<br>'); 
+                    } else {
+                        cell.innerText = ''; 
+                    }
+
+                    if (day === days[currentDayIndex] && isCurrentlyInClass(period.time)) {
+                        cell.classList.add('current'); 
+                    }
+
+                    let clickCount = 0;
+                    cell.addEventListener('click', function() {
+                        clickCount++;
+                        if (clickCount > 3) {
+                            clickCount = 0; 
+                        }
+                        const colors = ['#f8f8f8', '#FFDDC1', '#FFABAB', '#FFC3A0']; 
+                        cell.style.backgroundColor = colors[clickCount]; 
+                    });
+
+                    timetable.appendChild(cell);
+                }
+            });
+
+
+            setInterval(() => {
+                const now = new Date();
+                const currentDayIndex = now.getDay() === 0 ? 6 : now.getDay() - 1;
+                const currentPeriod = periods.find(period => isCurrentlyInClass(period.time));
+                if (currentPeriod) {
+                    const cellKey = days[currentDayIndex] + currentPeriod.num; 
+                    document.querySelectorAll(".cell").forEach(cell => cell.classList.remove('current')); 
+                    const currentCell = [...timetable.children].find((_, index) => index % 9 === 1 && currentPeriod.num === periods[Math.floor(index / 9)].num);
+                    if (currentCell) {
+                        currentCell.classList.add('current'); 
+                    }
+                }
+            }, 60000); 
         }
 
-        function openWindow(url) {
-            window.open(url, '_blank', 'width=800,height=600');
+        function isCurrentlyInClass(periodTime) {
+            const [startTime, endTime] = periodTime.split(' ~ ').map(t => t.trim());
+            const now = new Date();
+            const nowTime = now.toTimeString().slice(0, 5);
+            return nowTime >= startTime && nowTime <= endTime;
         }
-        
     </script>
-
 </body>
 </html>
