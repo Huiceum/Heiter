@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家系圖描述語言 (FTDL) 渲染器 beta版本</title>
+    <link rel="stylesheet" href="FTDL.css">
+
+
+</head>
+<style>
+/* Logo 樣式 */
+.logo {
+    width: 50px;
+    height: 50px;
+}
+
+
+</style>
+<body>
+    <div id="loading-overlay">讀取中...</div>
+
+    <div class="container">
+
+        <h1>家系圖描述語言 (FTDL) 渲染器 beta版本</h1>
+        
+        <div id="dialogue-container">
+            <input type="text" id="user-text-input" placeholder="請在此處輸入您的文本...">
+            <button id="run-dialogue-btn">執行</button>
+        </div>
+        <h3>目前正在測試中，請注意不要將私人訊息及資料投入其中，可能導致個人或個案資料外洩！</h3>
+
+        <button id="toggle-editor-btn" style="margin-left: 0; margin-bottom:10px;">隱藏編輯器</button>
+        
+        <div class="editor-container">
+            <textarea id="ftdl-editor" placeholder="在此輸入FTDL代碼..."></textarea>
+            <div id="preview-wrapper">
+                <div id="preview">
+                    <div id="family-tree-container"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="render-controls">
+            <button id="render-btn">渲染家系圖</button>
+            <div class="zoom-controls">
+                <button id="zoom-in-btn">+</button>
+                <button id="zoom-out-btn">-</button>
+                <button id="zoom-reset-btn">100%</button>
+            </div>
+            <label style="margin-left: 20px;">
+                <input type="checkbox" id="toggle-gender-color-btn" checked> 顯示性別顏色
+            </label>
+            <button id="toggle-dark-mode-btn" style="margin-left: 20px;">切換到黑暗模式</button>
+        </div>
+        <div id="error-message" class="error-message"></div>
+
+        <div class="ftdl-syntax-guide">
+             <h2 class="usage-title">FTDL 使用說明</h2>
+            <h3>基本結構</h3>
+            <p>FTDL (Family Tree Description Language) 使用文字區塊來定義家系圖的各個元素。</p>
+            <h3><code>metadata</code> - 定義圖譜(可選)</h3>
+            <pre><code>metadata { 
+    title:: "圖譜標題";       // (可選)
+    author: "作者名";      // (可選)
+    date: "YYYY-MM-DD"; // (可選)
+}</code></pre>
+            <h3><code>person</code> - 定義個人</h3>
+            <pre><code>person { 
+    id: "unique_id";       // (必填) 唯一標識符
+    name?: "顯示名稱";      // (可選)
+    gender: "male"|"female"|"other"; // (必填) 性別，影響圖形 (男=方, 女=圓)
+    birth?: "YYYY-MM-DD";   // (可選) 生日
+    death?: "YYYY-MM-DD";   // (可選) 忌日
+    proband?: true;         // (可選) 是否為案主 (會特別標註)
+}</code></pre>
+            <h3><code>relationship</code> - 定義關係</h3>
+            <pre><code>relationship {
+    partners: ["id1", "id2"]; // (必填) 伴侶雙方的id
+    type?: "marriage"|"partnership"; // (可選, 默認 marriage)
+    status?: "married"|"divorced"|"separated"|"widowed"|"annulled"; // (可選) 婚姻狀態
+    start_date?: "YYYY-MM-DD";  // (可選) 關係開始日期
+    end_date?: "YYYY-MM-DD";    // (可選) 關係結束日期 
+    children?: ["child_id1", ...]; // (可選) 此關係的子女
+}</code></pre>
+            <h3><code>note for "person_id"</code> - 為個人添加備註</h3>
+            <pre><code>note for "some_person_id" {
+    text: "這裡填寫備註內容...";
+}</code></pre>
+            <h3><code>style for "selector"</code> - 自定義樣式</h3>
+            <pre><code>style for "#gender=female" { fill_color: "#FFC0CB"; shape: "circle"; }
+style for "person_id_to_highlight" { border_width: "3px"; border_color: "red"; }</code></pre>
+            <p>選擇器 (selector) 可以是：個人ID (<code>"grandfather"</code>), 屬性 (<code>"#gender=male"</code>, <code>"#proband=true"</code>)。</p>
+        </div>
+    </div>
+
+    <script src="FTDL.js"></script>
+</body>
+</html>
