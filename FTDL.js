@@ -33,12 +33,12 @@ class FTDLParser {
         let propMatch;
         while ((propMatch = propRegex.exec(propertiesStr)) !== null) {
             const key = propMatch[1];
-            if (propMatch[2] !== undefined) properties[key] = propMatch[2]; 
-            else if (propMatch[3] !== undefined) { 
+            if (propMatch[2] !== undefined) properties[key] = propMatch[2];
+            else if (propMatch[3] !== undefined) {
                 properties[key] = propMatch[3].split(',')
                     .map(item => item.trim().replace(/^"|"$/g, ''))
                     .filter(item => item.length > 0);
-            } else if (propMatch[4] !== undefined) { 
+            } else if (propMatch[4] !== undefined) {
                 const value = propMatch[4].trim();
                 if (value === 'true') properties[key] = true;
                 else if (value === 'false') properties[key] = false;
@@ -61,8 +61,8 @@ class FamilyTreeRenderer {
         this.data = parsedData;
         this.previewElement = previewElement;
         this.treeContainerElement = treeContainerElement;
-        this.renderedCouples = new Set(); 
-        this.processedPersonsAsDescendants = new Set(); 
+        this.renderedCouples = new Set();
+        this.processedPersonsAsDescendants = new Set();
         this.injectDefaultStyles();
         this.tooltipElement = null;
         this.createSharedTooltip();
@@ -72,26 +72,18 @@ class FamilyTreeRenderer {
         if (!this.data.styles) {
             this.data.styles = [];
         }
-        // Add a flag to distinguish default injected gender styles
         const defaultGenderStyles = [
             { selector: "#gender=female", fill_color: "#fce4ec", border_color: "#f48fb1", shape: "circle", _isDefaultGenderStyle: true },
-            { selector: "#gender=male", fill_color: "#e8eaf6", border_color: "#7986cb", _isDefaultGenderStyle: true }, // Default shape for male is rectangle (CSS handles)
+            { selector: "#gender=male", fill_color: "#e8eaf6", border_color: "#7986cb", _isDefaultGenderStyle: true },
         ];
         const probandStyle = { selector: "#proband=true", border_width: "3px", border_style: "double", border_color: "#ff9800" };
 
         defaultGenderStyles.forEach(defStyle => {
-            // Add if no user-defined style for the same selector exists, or if it exists, let user's FTDL override later.
-            // For simplicity, we just ensure they are present. If user defines them, FTDL parser adds them,
-            // and applyStyles will pick the last defined one for a given selector.
-            // To make these truly "default" that users can override, they should be added *before* parsing user styles,
-            // or the parser needs to handle defaults.
-            // For now, pushing them means they might override user styles if user puts their style before any person.
-            // A better way: check if a style with this selector already exists.
             if (!this.data.styles.some(s => s.selector === defStyle.selector)) {
-                this.data.styles.unshift(defStyle); // Add to the beginning, so user FTDL styles can override
+                this.data.styles.unshift(defStyle);
             }
         });
-        
+
         if (!this.data.styles.some(s => s.selector === probandStyle.selector)) {
             this.data.styles.unshift(probandStyle);
         }
@@ -100,7 +92,7 @@ class FamilyTreeRenderer {
     createSharedTooltip() {
         this.tooltipElement = document.createElement('div');
         this.tooltipElement.className = 'tooltip';
-        if (this.previewElement && this.previewElement.appendChild) { 
+        if (this.previewElement && this.previewElement.appendChild) {
             this.previewElement.appendChild(this.tooltipElement);
         }
     }
@@ -111,28 +103,28 @@ class FamilyTreeRenderer {
         let endYear;
         if (deathDateStr) endYear = parseInt(deathDateStr.substring(0, 4));
         else endYear = new Date().getFullYear();
-        if (isNaN(endYear)) return null; 
+        if (isNaN(endYear)) return null;
         return Math.max(0, endYear - birthYear);
     }
-    
+
     render() {
         this.renderedCouples.clear();
         this.processedPersonsAsDescendants.clear();
         const treeRoot = document.createElement('div');
         treeRoot.className = 'family-tree-root';
-        
+
         if (this.data?.metadata?.title) {
             const titleEl = document.createElement('h2');
             titleEl.textContent = this.data.metadata.title;
             titleEl.style.textAlign = 'center'; titleEl.style.width = '100%';
             titleEl.style.marginBottom = '30px'; treeRoot.appendChild(titleEl);
         }
-        
-        const rootPersons = this.findRootNodes(); 
-        if (Array.isArray(rootPersons)) { 
+
+        const rootPersons = this.findRootNodes();
+        if (Array.isArray(rootPersons)) {
             rootPersons.forEach(rootPersonId => {
-                if (rootPersonId && !this.processedPersonsAsDescendants.has(rootPersonId)) { 
-                    const familyNode = this.renderFamilyNode(rootPersonId, false); 
+                if (rootPersonId && !this.processedPersonsAsDescendants.has(rootPersonId)) {
+                    const familyNode = this.renderFamilyNode(rootPersonId, false);
                     if (familyNode) treeRoot.appendChild(familyNode);
                 }
             });
@@ -141,12 +133,12 @@ class FamilyTreeRenderer {
     }
 
     findRootNodes() {
-        if (!this.data?.persons || !this.data.relationships) return []; 
+        if (!this.data?.persons || !this.data.relationships) return [];
         const allPersonsIds = Object.keys(this.data.persons);
         const childrenIds = new Set();
         if (Array.isArray(this.data.relationships)) {
             this.data.relationships.forEach(rel => {
-                if (rel?.children?.length) { 
+                if (rel?.children?.length) {
                     rel.children.forEach(childId => { if (childId) childrenIds.add(childId); });
                 }
             });
@@ -158,55 +150,113 @@ class FamilyTreeRenderer {
         const personDataOriginal = this.data.persons[personId];
         if (!personDataOriginal) return null;
         const personData = {...personDataOriginal};
-        if (!isDescendantInSiblingsRow && this.processedPersonsAsDescendants.has(personId)) return null; 
-        this.processedPersonsAsDescendants.add(personId); 
+        if (!isDescendantInSiblingsRow && this.processedPersonsAsDescendants.has(personId)) return null;
+        this.processedPersonsAsDescendants.add(personId);
 
         const familyNodeDiv = document.createElement('div');
         familyNodeDiv.className = 'family-node';
+        
         const coupleRowDiv = document.createElement('div');
-        coupleRowDiv.className = 'couple-row';
-        
-        const personElement = this.renderPerson(personData, isDescendantInSiblingsRow);
-        if (!personElement) return null; 
-        coupleRowDiv.appendChild(personElement);
+        coupleRowDiv.className = 'couple-row'; // Parents will be side-by-side here
 
-        let childrenToRender = null, relationshipForChildren = null;
+        const personElement = this.renderPerson(personData, isDescendantInSiblingsRow);
+        if (!personElement) return null;
+
+        let childrenToRender = null;
+        let relationshipForChildren = null; 
+        let marriageLineBarElement = null; // Will hold the new marriage bar (─)
+        let partnerFoundAndProcessed = false;
+
         const personRelationships = this.data.relationships.filter(r => r.partners?.includes(personId));
-        
+
         for (const rel of personRelationships) {
-            if (!rel.partners) continue;
+            if (partnerFoundAndProcessed || !rel.partners) continue;
+
             const otherPartnerId = rel.partners.find(p => p !== personId);
 
             if (otherPartnerId && this.data.persons[otherPartnerId]) {
                 const coupleKey = [personId, otherPartnerId].sort().join('-');
                 if (!this.renderedCouples.has(coupleKey)) {
                     this.renderedCouples.add(coupleKey);
-                    const partnerData = {...this.data.persons[otherPartnerId]}; 
-                    const partnerElement = this.renderPerson(partnerData, false); 
-                    if (!partnerElement) continue; 
-                    const marriageConnector = this.renderMarriage(personId, otherPartnerId, rel);
-                    const personIdx = rel.partners.indexOf(personId), partnerIdx = rel.partners.indexOf(otherPartnerId);
+                    const partnerData = {...this.data.persons[otherPartnerId]};
+                    const partnerElement = this.renderPerson(partnerData, false);
+                    if (!partnerElement) continue;
 
+                    // Create the marriage line bar element (this is the new horizontal bar with info)
+                    marriageLineBarElement = this.renderMarriage(rel); 
+
+                    const personIdx = rel.partners.indexOf(personId);
+                    const partnerIdx = rel.partners.indexOf(otherPartnerId);
+
+                    // Add person and partner to coupleRowDiv, ordered correctly
                     if (personIdx !== -1 && partnerIdx !== -1 && personIdx < partnerIdx) {
-                        coupleRowDiv.appendChild(marriageConnector); coupleRowDiv.appendChild(partnerElement);
+                        coupleRowDiv.appendChild(personElement);
+                        coupleRowDiv.appendChild(partnerElement);
                     } else if (personIdx !== -1 && partnerIdx !== -1 && partnerIdx < personIdx) {
-                        coupleRowDiv.insertBefore(partnerElement, personElement);
-                        coupleRowDiv.insertBefore(marriageConnector, personElement);
-                    } else { coupleRowDiv.appendChild(marriageConnector); coupleRowDiv.appendChild(partnerElement); }
-                            
-                    if (rel.children?.length) { childrenToRender = rel.children; relationshipForChildren = rel; }
-                    this.processedPersonsAsDescendants.add(otherPartnerId); 
-                    break; 
+                        coupleRowDiv.appendChild(partnerElement);
+                        coupleRowDiv.appendChild(personElement);
+                    } else { // Fallback if indexing is unusual
+                        coupleRowDiv.appendChild(personElement);
+                        coupleRowDiv.appendChild(partnerElement);
+                    }
+
+                    if (rel.children?.length) {
+                        childrenToRender = rel.children;
+                        relationshipForChildren = rel;
+                    }
+                    this.processedPersonsAsDescendants.add(otherPartnerId);
+                    partnerFoundAndProcessed = true; 
                 }
             } else if (rel.partners.length === 1 && rel.partners[0] === personId && rel.children?.length) {
-                 if (!childrenToRender) { childrenToRender = rel.children; relationshipForChildren = rel; }
+                 // Single parent with children
+                 if (!childrenToRender) { 
+                    childrenToRender = rel.children;
+                    relationshipForChildren = rel;
+                 }
             }
         }
+        
+        // If personElement hasn't been added to coupleRowDiv (e.g., single person, or main person not part of processed couple)
+        if (coupleRowDiv.children.length === 0) {
+            coupleRowDiv.appendChild(personElement);
+        }
+        
         familyNodeDiv.appendChild(coupleRowDiv);
-        if (childrenToRender) this.renderChildren(familyNodeDiv, childrenToRender, relationshipForChildren);
+
+        // Add the new marriage presentation structure (vertical lines + horizontal bar)
+        // This is added only if marriageLineBarElement was created (i.e., for a couple relationship)
+        if (marriageLineBarElement) {
+            const marriagePresentationDiv = document.createElement('div');
+            marriagePresentationDiv.className = 'marriage-presentation'; // Container for visual marriage line structure
+
+            const connectorsAndBar = document.createElement('div');
+            connectorsAndBar.className = 'parent-lines-and-bar'; // For ｜---｜ structure
+
+            // Left vertical line descending from parent
+            const leftParentLine = document.createElement('div');
+            leftParentLine.className = 'parent-descender-line';
+            connectorsAndBar.appendChild(leftParentLine);
+
+            // The marriage bar itself (---)
+            connectorsAndBar.appendChild(marriageLineBarElement); 
+
+            // Right vertical line descending from parent
+            const rightParentLine = document.createElement('div');
+            rightParentLine.className = 'parent-descender-line';
+            connectorsAndBar.appendChild(rightParentLine);
+            
+            marriagePresentationDiv.appendChild(connectorsAndBar);
+            familyNodeDiv.appendChild(marriagePresentationDiv);
+        }
+
+        if (childrenToRender) {
+            // Children connect visually below the marriagePresentationDiv (if it exists) or coupleRowDiv.
+            // The `parent-to-children-line` in `renderChildren` will handle the vertical connection downwards.
+            this.renderChildren(familyNodeDiv, childrenToRender, relationshipForChildren);
+        }
         return familyNodeDiv;
     }
-            
+
     renderPerson(personData, isDescendantInSiblingsRow = false) {
         if (!personData?.id) return null;
         const personDiv = document.createElement('div');
@@ -216,18 +266,16 @@ class FamilyTreeRenderer {
         if (personData.gender) personDiv.classList.add(personData.gender);
         if (personData.proband) personDiv.classList.add('proband');
         if (isDescendantInSiblingsRow) personDiv.classList.add('descendant-link');
-        
-        this.applyStyles(personDiv, personData); // Apply FTDL styles
 
-        // Ensure .female class is set for females if no FTDL shape overrides to rectangle
-        // and if borderRadius wasn't set by an ID-specific FTDL style.
-        if (personData.gender === 'female' && !personDiv.style.borderRadius && !elementHasRectangleStyleFromFtdl(personDiv, personData, this.data.styles)) {
-            personDiv.classList.add('female');
+        this.applyStyles(personDiv, personData);
+
+        if (personData.gender === 'female' && !personDiv.style.borderRadius && !this.elementHasRectangleStyleFromFtdl(personDiv, personData, this.data.styles)) {
+            personDiv.classList.add('female'); 
         }
 
 
         const age = this.calculateAge(personData.birth, personData.death);
-        if (age !== null && !personData.proband) { 
+        if (age !== null && !personData.proband) {
             const ageEl = document.createElement('span'); ageEl.className = 'age';
             ageEl.textContent = personData.death ? `${age} (逝)` : age;
             personDiv.appendChild(ageEl);
@@ -237,7 +285,7 @@ class FamilyTreeRenderer {
             nameEl.textContent = personData.name; personDiv.appendChild(nameEl);
         } else if (isDescendantInSiblingsRow || personData.gender === 'female') { 
              const nameEl = document.createElement('div'); nameEl.className = 'name';
-             nameEl.innerHTML = ' '; personDiv.appendChild(nameEl);
+             nameEl.innerHTML = ' '; personDiv.appendChild(nameEl); 
         }
         if (personData.birth || personData.death) {
             const datesEl = document.createElement('div'); datesEl.className = 'dates';
@@ -271,8 +319,7 @@ class FamilyTreeRenderer {
         });
         return personDiv;
     }
-    
-    // Helper for renderPerson to check FTDL styles for explicit rectangle shape
+
     elementHasRectangleStyleFromFtdl(element, personData, ftdlStyles) {
         if (!ftdlStyles) return false;
         return ftdlStyles.some(style => {
@@ -280,7 +327,6 @@ class FamilyTreeRenderer {
             let match = false;
             if (style.selector === personData.id) match = true;
             else if (style.selector === `#gender=${personData.gender}`) match = true;
-            // Proband rule usually doesn't define shape, but check just in case
             else if (style.selector === `#proband=true` && personData.proband) match = true;
             return match && style.shape === 'rectangle';
         });
@@ -302,14 +348,12 @@ class FamilyTreeRenderer {
         const showGenderColors = genderColorToggle ? genderColorToggle.checked : true;
         const isDarkMode = document.body.classList.contains('dark-mode');
 
-        element.style.backgroundColor = ''; // Reset inline styles so CSS can take effect
+        element.style.backgroundColor = '';
         element.style.borderColor = '';
-        // Note: FTDL border_width, border_style, shape (which sets borderRadius) are applied below
-        // and will override CSS if present in FTDL.
 
         this.data.styles.forEach(style => {
             if (!style || !style.selector) return;
-            
+
             let match = false;
             if (style.selector === personData.id) match = true;
             else if (style.selector === `#gender=${personData.gender}`) match = true;
@@ -319,17 +363,11 @@ class FamilyTreeRenderer {
                 let allowFtdlFillColor = true;
                 let allowFtdlBorderColor = true;
 
-                // If this is a default gender style (from injectDefaultStyles)
-                // AND dark mode is on AND showGenderColors is on,
-                // THEN do NOT apply FTDL's light-mode color, let dark mode CSS handle it.
                 if (style._isDefaultGenderStyle && isDarkMode && showGenderColors) {
                     allowFtdlFillColor = false;
                     allowFtdlBorderColor = false;
                 }
-                
-                // If showGenderColors is false, and this IS a default gender style,
-                // do not apply its color either (let .no-gender-colors CSS handle it).
-                // This does not apply if it's an ID-specific style.
+
                 if (!showGenderColors && style._isDefaultGenderStyle && style.selector !== personData.id) {
                     allowFtdlFillColor = false;
                     allowFtdlBorderColor = false;
@@ -342,77 +380,119 @@ class FamilyTreeRenderer {
                     element.style.borderColor = style.border_color;
                 }
 
-                // Non-color FTDL style properties always apply if rule matches
                 if (style.border_width) element.style.borderWidth = style.border_width;
                 if (style.border_style) element.style.borderStyle = style.border_style;
-                
+
                 if (style.shape === 'circle') {
-                    // If FTDL says circle, make it a circle.
-                    // Add .female class if it's for female gender or if the person is female (consistency)
-                    // unless an ID-specific style for a male forces a circle.
                     if (style.selector === `#gender=female` || (personData.gender === 'female' && style.selector === personData.id && !this.data.styles.some(s => s.selector === personData.id && s.shape === 'rectangle'))) {
-                         element.classList.add('female');
+                         element.classList.add('female'); 
                     }
                     element.style.borderRadius = '50%';
                 } else if (style.shape === 'rectangle') {
-                    element.classList.remove('female'); // Ensure .female class is off for explicit rectangle
-                    element.style.borderRadius = '8px'; // Default for our rectangles
+                    element.classList.remove('female'); 
+                    element.style.borderRadius = '8px'; 
                 }
             }
         });
     }
 
-    renderMarriage(p1Id, p2Id, rel) {
-        const connector = document.createElement('div'); connector.className = 'marriage-connector';
-        const line = document.createElement('div'); line.className = 'marriage-line';
-        if (rel?.status) line.classList.add(`status-${rel.status}`);
-        connector.appendChild(line);
-        if (rel && (rel.start_date || rel.status || rel.end_date)) {
-            const info = document.createElement('div'); info.className = 'marriage-info';
-            let txt = ''; if(rel.start_date) txt += `m. ${rel.start_date.substring(0,4)}`;
-            if (rel.status && rel.status !== "married" && rel.status !== "widowed") {
-                 txt += (txt?' ':'') + `(${rel.status.substring(0,3)}${rel.end_date?'. '+rel.end_date.substring(0,4):''})`;
-            } else if (rel.end_date && (rel.status==="widowed" || (!rel.status &&this.data.persons[p1Id]?.death &&this.data.persons[p2Id]?.death && (this.data.persons[p1Id].death===rel.end_date||this.data.persons[p2Id].death===rel.end_date)))) {
-                 txt += (txt?' ':'') + `- ${rel.end_date.substring(0,4)}`;
-            } else if (rel.end_date && !rel.status) { 
-                 const p1=this.data.persons[p1Id], p2=this.data.persons[p2Id];
-                 if ((p1?.death===rel.end_date)||(p2?.death===rel.end_date)) txt+=(txt?' ':'')+`- ${rel.end_date.substring(0,4)}`;
-            }
-            info.textContent = txt.trim(); if (info.textContent) line.appendChild(info);
+    // renderMarriage now creates the horizontal bar (---) with marriage info, to be placed below parents.
+    renderMarriage(rel) { // `rel` is the relationship object
+        const barElement = document.createElement('div');
+        // This class is for the new horizontal bar. CSS will define its appearance.
+        // It replaces the concept of the old 'marriage-line' that was between parents.
+        barElement.className = 'marriage-line-bar'; 
+
+        if (rel?.status) {
+            // Add status class (e.g., status-divorced) for potential icon styling via CSS
+            barElement.classList.add(`status-${rel.status}`);
         }
-        return connector;
+
+        if (rel && (rel.start_date || rel.status || rel.end_date)) {
+            const info = document.createElement('div');
+            info.className = 'marriage-info'; // Re-use for styling the text content on the bar
+            
+            let txt = '';
+            if (rel.start_date) {
+                txt += `m. ${rel.start_date.substring(0,4)}`;
+            }
+
+            // Handle status text and end date for statuses like divorced, separated
+            if (rel.status && rel.status !== "married" && rel.status !== "widowed") {
+                 txt += (txt ? ' ' : '') + `(${rel.status.substring(0,3)}${rel.end_date ? '. ' + rel.end_date.substring(0,4) : ''})`;
+            } 
+            // Handle end date for widowed status or implicit end due to death
+            else if (rel.end_date) {
+                let isWidowedOrEndedByDeath = rel.status === "widowed";
+                if (!isWidowedOrEndedByDeath && rel.partners && rel.partners.length >= 1) { // Check partners for death dates
+                    const p1Id = rel.partners[0];
+                    const p2Id = rel.partners.length > 1 ? rel.partners[1] : null;
+                    
+                    const p1Death = this.data.persons[p1Id]?.death;
+                    const p2Death = p2Id ? this.data.persons[p2Id]?.death : null;
+
+                    const endDateYear = rel.end_date.substring(0,4);
+
+                    if ((p1Death && p1Death.startsWith(endDateYear)) || (p2Death && p2Death.startsWith(endDateYear))) {
+                        isWidowedOrEndedByDeath = true; 
+                    }
+                }
+                // Append end date if it's a "widowed" type of ending, or if it's a non-married/non-widowed status that already includes end_date.
+                // Avoid double printing end_date if already handled by (status.substring(0,3) + end_date)
+                if (isWidowedOrEndedByDeath && !(rel.status && rel.status !== "married" && rel.status !== "widowed")) {
+                     txt += (txt ? ' ' : '') + `- ${rel.end_date.substring(0,4)}`;
+                }
+            }
+            
+            info.textContent = txt.trim();
+            if (info.textContent) {
+                barElement.appendChild(info);
+            }
+        }
+        return barElement; // This is the div for the horizontal bar ---
     }
 
     renderChildren(parentNode, childrenIds, relCtx) {
         if (!childrenIds?.length) return;
         const container = document.createElement('div'); container.className = 'children-container';
+        
+        // This line connects from the marriage bar (or couple row for single parents) 
+        // down to the horizontal line connecting siblings.
         const p2cLine = document.createElement('div'); p2cLine.className = 'parent-to-children-line';
         container.appendChild(p2cLine);
+        
         const sLineCont = document.createElement('div'); sLineCont.className = 'siblings-connector-line-container';
         const sLine = document.createElement('div'); sLine.className = 'siblings-connector-line';
-        sLineCont.appendChild(sLine); container.appendChild(sLineCont);
+        sLineCont.appendChild(sLine); 
+        container.appendChild(sLineCont);
+        
         const siblingsRow = document.createElement('div'); siblingsRow.className = 'siblings-row';
         childrenIds.forEach(cId => {
             const cData = this.data.persons[cId];
-            if (cData) { 
+            if (cData) {
+                // Pass true for isDescendantInSiblingsRow
                 const cNode = this.renderFamilyNode(cId, true); 
                 if (cNode) siblingsRow.appendChild(cNode);
             }
         });
-        if (siblingsRow.children.length > 0) { container.appendChild(siblingsRow); parentNode.appendChild(container); }
+        
+        if (siblingsRow.children.length > 0) { 
+            container.appendChild(siblingsRow); 
+            parentNode.appendChild(container); 
+        }
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const editorTextarea = document.getElementById('ftdl-editor'); 
-    const editorContainer = document.querySelector('.editor-container'); 
-    const previewWrapper = document.getElementById('preview-wrapper'); 
+    const editorTextarea = document.getElementById('ftdl-editor');
+    const editorContainer = document.querySelector('.editor-container');
+    const previewWrapper = document.getElementById('preview-wrapper');
     const renderBtn = document.getElementById('render-btn');
-    const previewDiv = document.getElementById('preview'); 
-    const treeContainer = document.getElementById('family-tree-container'); 
+    const previewDiv = document.getElementById('preview');
+    const treeContainer = document.getElementById('family-tree-container');
     const errorMessageDiv = document.getElementById('error-message');
     const toggleGenderColorBtn = document.getElementById('toggle-gender-color-btn');
-    const toggleEditorBtn = document.getElementById('toggle-editor-btn'); 
+    const toggleEditorBtn = document.getElementById('toggle-editor-btn');
     const toggleDarkModeBtn = document.getElementById('toggle-dark-mode-btn');
 
     const userTextInput = document.getElementById('user-text-input');
@@ -426,63 +506,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setControlsDisabled(isDisabled) {
         allControls.forEach(c => { if(c) c.disabled = isDisabled; });
-        if (!isDisabled && runDialogueBtn && !loadingOverlay.style.display.includes('flex')) {
+        if (!isDisabled && runDialogueBtn && loadingOverlay && !loadingOverlay.style.display.includes('flex')) { 
              runDialogueBtn.disabled = false;
         }
     }
-    function showLoading(msg="讀取中...") { if(loadingOverlay){ loadingOverlay.textContent=msg; loadingOverlay.style.display='flex';} setControlsDisabled(true); }
-    function hideLoading() { if(loadingOverlay) loadingOverlay.style.display='none'; setControlsDisabled(false); }
-    
-    function generateRandomString(len) { const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; let r=''; for(let i=0;i<len;i++)r+=c.charAt(Math.floor(Math.random()*c.length)); return r;}
-    async function submitToGoogleForm(txt, code) {
-        const formId='1FAIpQLSedI18mqcM7RKrt9dyk-PPhkhhW5nS2GG9Lxbci0AfChNjidA', formUrl=`https://docs.google.com/forms/d/e/${formId}/formResponse`;
-        const fd=new FormData(); fd.append('entry.1067260806',txt); fd.append('entry.1456608144',code);
-        try { await fetch(formUrl,{method:'POST',mode:'no-cors',body:fd}); console.log('Form submission initiated for:', code); return true;
-        } catch (e) { console.error('Error submitting to Google Form:',e); alert('提交到Google表單時發生錯誤: '+e.message); return false; }
+    function showLoading(msg="讀取中...") {
+        if(loadingOverlay){
+            loadingOverlay.textContent=msg;
+            loadingOverlay.style.display='flex';
+        }
+        setControlsDisabled(true);
     }
-    async function pollForResult(code) {
-        const sheetId='1W4YHC_nqWLzG4WC9rLr92TWpbMkOa3mVPkGPY8E5yVw', urlBase=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
-        let attempts=0, maxAttempts=60;
-        return new Promise((resolve, reject) => {
-            const intId = setInterval(async () => {
-                attempts++; if (attempts > maxAttempts) { clearInterval(intId); reject(new Error('輪詢超時')); return; }
-                const resultUrl = `${urlBase}&r=${Date.now()}`; console.log(`Polling attempt ${attempts} for ${code}...`);
-                try {
-                    const resp = await fetch(resultUrl);
-                    if(!resp.ok){ console.error('Poll network error:',resp.statusText, resp.status); if(resp.status===404||resp.status===403){clearInterval(intId);reject(new Error(`輪詢失敗 (狀態 ${resp.status})`));} return;}
-                    const csv = await resp.text(); if(!csv?.trim()){ console.log("Poll: empty CSV."); return; }
-                    const rows = parseComplexCsv(csv);
-                    for (let rIdx=1; rIdx<rows.length; rIdx++) {
-                        const fields = rows[rIdx];
-                        if (fields.length > 2 && fields[2] === code) {
-                            if (fields.length > 3 && fields[3] !== undefined) {
-                                const ftdlOut = fields[3];
-                                if (ftdlOut.trim() !== '' || ftdlOut === '') {
-                                    clearInterval(intId); console.log('Result for '+code+':', ftdlOut);
-                                    let finalFtdl = ftdlOut;
-                                    if(finalFtdl.startsWith("```ftdl\n")){finalFtdl=finalFtdl.substring(8); if(finalFtdl.endsWith("\n```"))finalFtdl=finalFtdl.substring(0,finalFtdl.length-4); else if(finalFtdl.endsWith("```"))finalFtdl=finalFtdl.substring(0,finalFtdl.length-3);}
-                                    else if(finalFtdl.startsWith("```")&&finalFtdl.includes("\n")){finalFtdl=finalFtdl.substring(finalFtdl.indexOf("\n")+1); if(finalFtdl.endsWith("\n```"))finalFtdl=finalFtdl.substring(0,finalFtdl.length-4); else if(finalFtdl.endsWith("```"))finalFtdl=finalFtdl.substring(0,finalFtdl.length-3);}
-                                    resolve(finalFtdl); return;
-                                }
-                            } console.log(`Code ${code} found, FTDL col empty. Polling.`); break;
-                        }
-                    } if(loadingOverlay.style.display.includes('flex')) loadingOverlay.textContent = `檢查結果中 (${attempts}/${maxAttempts})...`;
-                } catch (e) { console.error('Polling error:', e); }
-            }, 5000);
-        });
-    }
-    if (runDialogueBtn && userTextInput && editorTextarea) {
-        runDialogueBtn.addEventListener('click', async () => {
-            const userText = userTextInput.value.trim(); if(!userText){alert('請輸入文本！'); return;}
-            showLoading("處理請求中..."); const rCode = generateRandomString(17); console.log('Generated Code:', rCode);
-            const submitted = await submitToGoogleForm(userText, rCode);
-            if(submitted){ try{ showLoading("獲取內容..."); const resTxt = await pollForResult(rCode);
-                editorTextarea.value=resTxt; alert('已獲取內容！點擊 "渲染家系圖" 查看。'); userTextInput.value='';
-            } catch(e){console.error('Poll/update error:',e);alert('獲取結果錯誤: '+e.message);}} hideLoading();
-        });
+    function hideLoading() {
+        if(loadingOverlay) loadingOverlay.style.display='none';
+        setControlsDisabled(false);
     }
 
-    let currentScale = 1, isPanning = false, startX, startY, scrollLeftInit, scrollTopInit; 
+
+    if (typeof GoogleInteractionHandler !== 'undefined') {
+        const googleInteraction = new GoogleInteractionHandler(
+            userTextInput,
+            editorTextarea,
+            loadingOverlay,
+            showLoading,
+            hideLoading
+        );
+
+        if (runDialogueBtn && userTextInput && editorTextarea) {
+            runDialogueBtn.addEventListener('click', async () => {
+                await googleInteraction.handleRunDialogue();
+            });
+        }
+    } else {
+        console.warn("GoogleInteractionHandler is not defined. Dialogue features may be affected.");
+        // if(runDialogueBtn) runDialogueBtn.disabled = true; // Optionally disable if critical
+    }
+
+
+    let currentScale = 1, isPanning = false, startX, startY, scrollLeftInit, scrollTopInit;
     if(document.getElementById('zoom-in-btn')&&treeContainer) document.getElementById('zoom-in-btn').addEventListener('click',()=>{currentScale=Math.min(3,currentScale+0.1); treeContainer.style.transform=`scale(${currentScale})`;});
     if(document.getElementById('zoom-out-btn')&&treeContainer) document.getElementById('zoom-out-btn').addEventListener('click',()=>{currentScale=Math.max(0.2,currentScale-0.1); treeContainer.style.transform=`scale(${currentScale})`;});
     if(document.getElementById('zoom-reset-btn')&&treeContainer) document.getElementById('zoom-reset-btn').addEventListener('click',()=>{currentScale=1; treeContainer.style.transform=`scale(${currentScale})`;});
@@ -497,11 +558,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!treeContainer || !toggleGenderColorBtn) return;
         if (toggleGenderColorBtn.checked) treeContainer.classList.remove('no-gender-colors');
         else treeContainer.classList.add('no-gender-colors');
-        if (rendererInstance) doRender(); // Re-render to apply style changes correctly
+        if (rendererInstance) doRender();
     }
     if(toggleGenderColorBtn) toggleGenderColorBtn.addEventListener('change', updateGenderColorPreferenceAndRender);
 
-    // Dark Mode Toggle
     if (toggleDarkModeBtn) {
         const darkModePref = localStorage.getItem('darkMode');
         if (darkModePref === 'enabled') {
@@ -520,7 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('darkMode', 'disabled');
                 toggleDarkModeBtn.textContent = '切換到黑暗模式';
             }
-            if (rendererInstance) doRender(); // Re-render to apply style changes correctly
+            if (rendererInstance) doRender(); 
         });
     }
 
@@ -530,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
             editorTextarea.classList.toggle('hidden');
             editorContainer.classList.toggle('editor-hidden');
             toggleEditorBtn.textContent = editorTextarea.classList.contains('hidden') ? '顯示編輯器' : '隱藏編輯器';
-            setTimeout(adjustSiblingConnectorLines, 550);
+            setTimeout(adjustSiblingConnectorLines, 550); 
         });
     }
 
@@ -538,31 +598,69 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!treeContainer) return;
         treeContainer.querySelectorAll('.siblings-connector-line').forEach(lineEl => {
             const lineContEl = lineEl.parentElement; if (!lineContEl) return;
-            const p2cLineEl = lineContEl.previousElementSibling;
-            if (p2cLineEl?.classList.contains('parent-to-children-line')) { p2cLineEl.style.transform = 'translateX(0px)'; p2cLineEl.style.marginLeft = '0px';}
-            const siblingsRow = lineContEl.nextElementSibling;
-            if (!siblingsRow || !siblingsRow.classList.contains('siblings-row') || siblingsRow.children.length === 0) { lineEl.style.width='0px'; lineEl.style.left='0px'; return; }
+            const p2cLineEl = lineContEl.previousElementSibling; // This is .parent-to-children-line
+            // Reset transform before recalculating for parent-to-children-line
+            if (p2cLineEl?.classList.contains('parent-to-children-line')) { 
+                p2cLineEl.style.transform = 'translateX(0px)'; 
+                // p2cLineEl.style.marginLeft = '0px'; // Avoid direct margin manipulation if possible
+            }
+            const siblingsRow = lineContEl.nextElementSibling; // This is .siblings-row
+            if (!siblingsRow || !siblingsRow.classList.contains('siblings-row') || siblingsRow.children.length === 0) { 
+                lineEl.style.width='0px'; lineEl.style.left='0px'; return; 
+            }
             const descPersons = Array.from(siblingsRow.querySelectorAll('.person.descendant-link'));
-            if (descPersons.length === 0) { lineEl.style.width='0px'; lineEl.style.left='0px'; return; }
-            const lcr = lineContEl.getBoundingClientRect(), fdr = descPersons[0].getBoundingClientRect(), lastdr = descPersons[descPersons.length-1].getBoundingClientRect();
-            if((fdr.width===0&&fdr.height===0)||(lastdr.width===0&&lastdr.height===0)||(lcr.width===0&&lcr.height===0)){lineEl.style.width='0px';lineEl.style.left='0px'; return;}
-            const fcRel = (fdr.left-lcr.left)+(fdr.width/2), lcRel=(lastdr.left-lcr.left)+(lastdr.width/2);
+            if (descPersons.length === 0) { 
+                lineEl.style.width='0px'; lineEl.style.left='0px'; return; 
+            }
+            
+            const lcr = lineContEl.getBoundingClientRect(); // Bounding rect of siblings-connector-line-container
+            const fdr = descPersons[0].getBoundingClientRect(); // First descendant
+            const lastdr = descPersons[descPersons.length-1].getBoundingClientRect(); // Last descendant
+
+            if((fdr.width===0&&fdr.height===0)||(lastdr.width===0&&lastdr.height===0)||(lcr.width===0&&lcr.height===0)){
+                lineEl.style.width='0px';lineEl.style.left='0px'; return;
+            } 
+            
+            const fcRel = (fdr.left - lcr.left) + (fdr.width / 2); // Center of first child relative to line container
+            const lcRel = (lastdr.left - lcr.left) + (lastdr.width / 2); // Center of last child relative to line container
+            
             let slMinLRel, slMaxRRel;
-            if(descPersons.length===1){ const singleCRel=fcRel; slMinLRel=singleCRel-1; slMaxRRel=singleCRel+1; lineEl.style.width='2px'; lineEl.style.left=`${slMinLRel}px`;}
-            else{slMinLRel=Math.min(fcRel,lcRel); slMaxRRel=Math.max(fcRel,lcRel); lineEl.style.left=`${slMinLRel}px`; lineEl.style.width=`${Math.max(2,slMaxRRel-slMinLRel)}px`;}
+            if(descPersons.length === 1){ 
+                const singleCRel = fcRel; 
+                slMinLRel = singleCRel - 1; // Small width for single child connector point
+                slMaxRRel = singleCRel + 1; 
+                lineEl.style.width = '2px'; 
+                lineEl.style.left = `${slMinLRel}px`;
+            } else {
+                slMinLRel = Math.min(fcRel, lcRel); 
+                slMaxRRel = Math.max(fcRel, lcRel); 
+                lineEl.style.left = `${slMinLRel}px`; 
+                lineEl.style.width = `${Math.max(2, slMaxRRel - slMinLRel)}px`;
+            }
+            
+            // Adjust the parent-to-children-line (p2cLineEl) to align with the center of the siblings connector line (slMidAbsX)
             if(p2cLineEl?.classList.contains('parent-to-children-line')){
-                const childrenContEl = lineContEl.parentElement, childContR = childrenContEl.getBoundingClientRect();
-                const slMidAbsX = lcr.left + (slMinLRel+slMaxRRel)/2;
-                const p2cMidAbsX = childContR.left + (childContR.width/2);
-                p2cLineEl.style.transform = `translateX(${slMidAbsX - p2cMidAbsX}px)`;
+                const childrenContEl = lineContEl.parentElement; // This is .children-container
+                const childContR = childrenContEl.getBoundingClientRect();
+                
+                // Midpoint of the *actual drawn* siblings-connector-line, in absolute page coordinates
+                const slMidAbsX = lcr.left + slMinLRel + (parseFloat(lineEl.style.width) / 1.9);
+                
+                // Midpoint of the parent-to-children-line's container (.children-container), in absolute page coordinates
+                // Assuming p2cLineEl is to be centered within its natural flow in childrenContEl before transform
+                const p2cLineOriginalAbsX = p2cLineEl.getBoundingClientRect().left + (p2cLineEl.getBoundingClientRect().width / 2);
+
+                // Calculate the translation needed to move p2cLineEl's center to slMidAbsX
+                const translateX = slMidAbsX - p2cLineOriginalAbsX;
+                p2cLineEl.style.transform = `translateX(${translateX}px)`;
             }
         });
     }
 
     let rendererInstance = null;
     function doRender() {
-        const ftdlCode = editorTextarea ? editorTextarea.value : ""; 
-        const treeHolder = document.getElementById('family-tree-container'); 
+        const ftdlCode = editorTextarea ? editorTextarea.value : "";
+        const treeHolder = document.getElementById('family-tree-container');
         if (treeHolder) treeHolder.innerHTML = ''; else { console.error("#family-tree-container not found."); return; }
         if (errorMessageDiv) { errorMessageDiv.style.display='none'; errorMessageDiv.textContent='';}
         try {
@@ -575,9 +673,8 @@ document.addEventListener('DOMContentLoaded', () => {
             rendererInstance = new FamilyTreeRenderer(parsedData, previewDiv, treeContainer);
             const treeElement = rendererInstance.render();
             if (treeHolder && treeElement) treeHolder.appendChild(treeElement);
-            
-            // Apply current gender color visibility state (important after clearing and re-rendering)
-            if (toggleGenderColorBtn) {
+
+            if (toggleGenderColorBtn) { 
                  if (toggleGenderColorBtn.checked) treeContainer.classList.remove('no-gender-colors');
                  else treeContainer.classList.add('no-gender-colors');
             }
@@ -590,13 +687,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (renderBtn) renderBtn.addEventListener('click', doRender);
-    if (editorTextarea?.value.trim()) doRender();
+    if (editorTextarea?.value.trim()) doRender(); 
 });
-
-function parseComplexCsv(csvStr) {
-    const rows=[]; let cR=[], cF='', iQF=false; csvStr=csvStr.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-    for(let i=0;i<csvStr.length;i++){ const ch=csvStr[i];
-        if(iQF){ if(ch==='"'){ if(i+1<csvStr.length&&csvStr[i+1]==='"'){cF+='"';i++;}else{iQF=false;}}else{cF+=ch;}}
-        else{ if(ch==='"'&&cF===''){iQF=true;}else if(ch===','){cR.push(cF);cF='';}else if(ch==='\n'){cR.push(cF);rows.push(cR);cR=[];cF='';}else{cF+=ch;}}}
-    cR.push(cF);rows.push(cR); return rows.filter(r=>r.length>1||(r.length===1&&r[0]!==''));
-}
